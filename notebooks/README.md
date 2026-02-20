@@ -1,1 +1,1 @@
-Place Jupyter notebooks for visualization and exploratory analysis here.
+Notebooks are optional exploratory material and are not required for reproduction.

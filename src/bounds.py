@@ -18,6 +18,14 @@ def theorem_iii_1_upper_bound(temperature: float, n_sub: int, delta: float) -> f
     return float(temperature * np.log1p(n_sub * np.exp(-delta / temperature)))
 
 
+def soft_hard_gap_bound(delta: float, n_sub: int, temperature: float) -> float:
+    """Return T log(1 + N_sub exp(-Delta/T)) for the soft-hard gap on a DAG.
+
+    Requires temperature > 0 and delta, n_sub nonnegative; returns the theorem bound.
+    """
+    return theorem_iii_1_upper_bound(temperature, n_sub, delta)
+
+
 def enumerate_path_costs(
     graph: nx.DiGraph,
     source: Any,

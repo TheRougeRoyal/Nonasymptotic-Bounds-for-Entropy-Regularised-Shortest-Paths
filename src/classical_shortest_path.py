@@ -39,3 +39,16 @@ def bellman_ford_shortest_path(
     weight: str = "weight",
 ) -> List[Any]:
     return list(nx.bellman_ford_path(graph, source, target, weight=weight))
+
+
+def shortest_path_cost(
+    graph: nx.DiGraph,
+    source: Any,
+    target: Any,
+    weight: str = "weight",
+) -> float:
+    """Return d*(source) = min_{pi: s->t} C(pi) on a DAG with temperature-free costs.
+
+    Assumes a DAG (and nonnegative edge weights); returns the classical shortest-path cost.
+    """
+    return dijkstra_shortest_path_length(graph, source, target, weight=weight)

@@ -20,6 +20,7 @@ def soft_shortest_path_dag(
 
     if not nx.is_directed_acyclic_graph(graph):
         raise ValueError("soft_shortest_path_dag expects a DAG")
+    assert nx.is_directed_acyclic_graph(graph), "graph must be a DAG"
 
     topo = list(nx.topological_sort(graph))
     dT: Dict[Any, float] = {node: float("inf") for node in graph.nodes}
@@ -46,6 +47,24 @@ def soft_shortest_path_values(
     weight: str = "weight",
 ) -> Dict[Any, float]:
     """Return soft shortest-path values d_T(v) for all v to target."""
+    if temperature <= 0:
+        raise ValueError("temperature must be positive")
+    assert nx.is_directed_acyclic_graph(graph), "graph must be a DAG"
     source = target
     _, dT = soft_shortest_path_dag(graph, source, target, temperature, weight=weight)
     return dT
+
+
+def soft_shortest_path(
+    graph: nx.DiGraph,
+    source: Any,
+    target: Any,
+    temperature: float,
+    weight: str = "weight",
+) -> Tuple[float, Dict[Any, float]]:
+    """Return d_T(source) = -T log(sum_{pi: s->t} exp(-C(pi)/T)) on a DAG.
+
+    Assumes a DAG, temperature > 0, and edge costs stored in the given weight attribute.
+    Returns (d_T(source), d_T values for all nodes).
+    """
+    return soft_shortest_path_dag(graph, source, target, temperature, weight=weight)

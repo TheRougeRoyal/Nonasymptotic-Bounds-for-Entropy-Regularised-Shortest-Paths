@@ -3,7 +3,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ipynb_checkpoints/
-results/*.png
-results/*.pdf
-results/*.svg
+results/*
+!results/example_output.csv
 .DS_Store

@@ -1,21 +1,29 @@
 from __future__ import annotations
 
+import csv
 import os
-import sys
+import random
 from typing import List
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from src.bounds import compute_path_stats, theorem_iii_1_upper_bound
 from src.entropy_regularized import soft_shortest_path_dag
 
 
 def _results_path(filename: str) -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results", filename))
+    results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results"))
+    os.makedirs(results_dir, exist_ok=True)
+    return os.path.join(results_dir, filename)
+
+
+def _write_csv(path: str, header: list[str], rows: list[list[float]]) -> None:
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(rows)
 
 
 def build_parallel_dag(n_paths: int, delta: float = 0.2) -> nx.DiGraph:
@@ -30,6 +38,8 @@ def build_parallel_dag(n_paths: int, delta: float = 0.2) -> nx.DiGraph:
 
 
 def main() -> None:
+    np.random.seed(0)
+    random.seed(0)
     temps = 0.5
     n_paths_list = list(range(2, 16))
 
@@ -47,11 +57,20 @@ def main() -> None:
         gaps.append(d_star - dT)
         bounds.append(theorem_iii_1_upper_bound(temps, n_sub, delta))
 
+    _write_csv(
+        _results_path("path_multiplicity.csv"),
+        ["N_tot", "gap_d_star_minus_dT", "bound_theorem_iii_1", "Delta", "T"],
+        [
+            [float(n), float(g), float(b), float(0.3), float(temps)]
+            for n, g, b in zip(n_paths_list, gaps, bounds)
+        ],
+    )
+
     plt.figure(figsize=(6, 4))
     plt.plot(n_paths_list, gaps, marker="o", label="d*(s) - d_T(s)")
     plt.plot(n_paths_list, bounds, marker="s", linestyle="--", label="Theorem III.1 bound")
-    plt.xlabel("Number of paths N_tot")
-    plt.ylabel("Gap")
+    plt.xlabel("Number of paths $N_{\\mathrm{tot}}$")
+    plt.ylabel("Gap $d^*(s) - d_T(s)$")
     plt.title("Effect of path multiplicity")
     plt.grid(True, ls=":")
     plt.legend()

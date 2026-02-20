@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import csv
 import os
-import sys
-from typing import List
+import random
+from typing import List, Sequence
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.bounds import compute_path_stats, theorem_iii_1_upper_bound
 from src.classical_shortest_path import dijkstra_shortest_path, dijkstra_shortest_path_length
@@ -17,7 +16,16 @@ from src.graph import load_dag_from_json
 
 
 def _results_path(filename: str) -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results", filename))
+    results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "results"))
+    os.makedirs(results_dir, exist_ok=True)
+    return os.path.join(results_dir, filename)
+
+
+def _write_csv(path: str, header: Sequence[str], rows: List[Sequence[object]]) -> None:
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(rows)
 
 
 def plot_gap_vs_temperature(graph: nx.DiGraph, source: str, target: str) -> None:
@@ -36,11 +44,17 @@ def plot_gap_vs_temperature(graph: nx.DiGraph, source: str, target: str) -> None
         gaps.append(gap)
         bounds.append(theorem_iii_1_upper_bound(T, n_sub, delta))
 
+    _write_csv(
+        _results_path("temperature_gap.csv"),
+        ["T", "gap_d_star_minus_dT", "bound_theorem_iii_1"],
+        [[float(T), float(g), float(b)] for T, g, b in zip(temps, gaps, bounds)],
+    )
+
     plt.figure(figsize=(6, 4))
     plt.semilogy(temps, gaps, label="d*(s) - d_T(s)")
     plt.semilogy(temps, bounds, label="Theorem III.1 bound", linestyle="--")
-    plt.xlabel("Temperature T")
-    plt.ylabel("Gap (log scale)")
+    plt.xlabel("Temperature $T$")
+    plt.ylabel("Gap $d^*(s) - d_T(s)$ (log scale)")
     plt.title("Exponential convergence as T → 0+")
     plt.grid(True, which="both", ls=":")
     plt.legend()
@@ -58,10 +72,17 @@ def plot_exponential_convergence(graph: nx.DiGraph, source: str, target: str) ->
         dT, _ = soft_shortest_path_dag(graph, source, target, T)
         gaps.append(d_star - dT)
 
+    inv_t = 1.0 / temps
+    _write_csv(
+        _results_path("exponential_convergence.csv"),
+        ["T", "inv_T", "gap_d_star_minus_dT"],
+        [[float(T), float(it), float(g)] for T, it, g in zip(temps, inv_t, gaps)],
+    )
+
     plt.figure(figsize=(6, 4))
-    plt.semilogy(1.0 / temps, gaps)
-    plt.xlabel("1 / T")
-    plt.ylabel("Gap (log scale)")
+    plt.semilogy(inv_t, gaps)
+    plt.xlabel("$1/T$")
+    plt.ylabel("Gap $d^*(s) - d_T(s)$ (log scale)")
     plt.title("Exponential decay vs 1/T")
     plt.grid(True, which="both", ls=":")
     plt.tight_layout()
@@ -74,22 +95,32 @@ def plot_classical_vs_soft(graph: nx.DiGraph, source: str, target: str, temperat
 
     pos = nx.spring_layout(graph, seed=7)
     labels = {}
+    rows = []
     for node in graph.nodes:
         hard = dijkstra_shortest_path_length(graph, node, target)
         soft = dT_all.get(node, float("inf"))
         labels[node] = f"{node}\n d*={hard:.2f}\n dT={soft:.2f}"
+        rows.append([str(node), float(hard), float(soft)])
+
+    _write_csv(
+        _results_path("classical_vs_soft.csv"),
+        ["node", "d_star", "d_T"],
+        rows,
+    )
 
     plt.figure(figsize=(7, 4.5))
     nx.draw_networkx(graph, pos=pos, node_color="#DDE7FF", node_size=900, labels=labels)
     edge_labels = {(u, v): f"{data.get('weight', 1.0):.2f}" for u, v, data in graph.edges(data=True)}
     nx.draw_networkx_edge_labels(graph, pos=pos, edge_labels=edge_labels, font_color="#444")
-    plt.title(f"Classical vs Soft Shortest Paths (T={temperature})\n d*(s)={d_star:.3f}, dT(s)={dT:.3f}")
+    plt.title(f"Classical vs Soft Shortest Paths ($T$={temperature})\n d*(s)={d_star:.3f}, dT(s)={dT:.3f}")
     plt.axis("off")
     plt.tight_layout()
     plt.savefig(_results_path("classical_vs_soft.png"))
 
 
 def main() -> None:
+    np.random.seed(0)
+    random.seed(0)
     dag = load_dag_from_json(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "sample_dag.json")))
     graph = dag.to_networkx()
     source = dag.source

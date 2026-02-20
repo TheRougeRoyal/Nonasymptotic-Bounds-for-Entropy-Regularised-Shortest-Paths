@@ -1,35 +1,33 @@
 # Entropy-Regularized Shortest Paths
 
-Research implementation workspace for nonasymptotic bounds on entropy-regularized shortest paths.
+This repository implements entropy-regularized shortest paths on DAGs. For a source $s$ and target $t$,
+the soft value is
 
-## Overview
-This project provides:
-- Classical shortest-path algorithms (Dijkstra, Bellman-Ford)
-- Entropy-regularized (soft) shortest-path value computation via log-sum-exp
-- Nonasymptotic bound utilities (Theorem III.1)
-- Reproducible experiments and plots
-- IEEE paper template scaffold
+$$
+d_T(s) = -T \log\Big(\sum_{\pi:s\to t} \exp(-C(\pi)/T)\Big).
+$$
 
-## Quick Start
-1. Create and activate a virtual environment.
-2. Install dependencies from requirements.txt.
-3. Run experiments in experiments/ to generate plots in results/.
-4. Run tests with pytest.
+We provide classical shortest paths, soft values via log-sum-exp, and Theorem III.1 gap bounds.
+
+## Reproduction
+Install dependencies:
+
+```
+python -m pip install -r requirements.txt
+```
+
+Run all experiments (regenerates plots and CSVs in results/):
+
+```
+python run_all_experiments.py
+```
+
+Expected runtime: under 1 minute on a typical laptop.
 
 ## Project Layout
-- src/: Core implementation modules
-- experiments/: Numerical experiments and validation
-- tests/: Unit tests for theoretical bounds verification
-- notebooks/: Jupyter notebooks for visualization
-- data/: Sample DAG datasets
-- results/: Output figures and tables
-- paper/: IEEE LaTeX template scaffold
-
-## Experiments
-- temperature_analysis.py: gap vs temperature, exponential convergence as $T \to 0^+$, and classical vs soft comparison plots
-- path_multiplicity.py: impact of $N_{sub}$ and $N_{tot}$
-- cost_margin.py: sensitivity to $\Delta$
-
-## Notes
-- The IEEE template uses the IEEEtran class (available in standard LaTeX distributions).
-- Replace placeholder text in paper/main.tex with your final content.
+- src/: Core algorithms and public API
+- experiments/: Deterministic experiments and plotting
+- tests/: Mathematical verification tests
+- notebooks/: Optional exploratory notebooks
+- data/: Sample DAG inputs
+- results/: Generated plots and CSV outputs (not versioned)

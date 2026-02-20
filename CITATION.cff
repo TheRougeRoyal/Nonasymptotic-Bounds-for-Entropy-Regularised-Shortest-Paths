@@ -1,0 +1,6 @@
+cff-version: 1.2.0
+title: Entropy-Regularized Shortest Paths on DAGs
+message: If you use this software, please cite it.
+authors:
+  - name: Artifact Authors
+year: 2026
